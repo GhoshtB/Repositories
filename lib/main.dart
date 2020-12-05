@@ -49,7 +49,7 @@ class MyPaginationPageState extends State<MyPaginationPage> {
   var widgetList = <Widget>[];
   var inPage=1,lastpage=15;
   ScrollController controller=ScrollController();
-  var database= DatabaseHelper();
+  var database= DatabaseHelper.instance;
   var hasInternet=true;
 
 
@@ -57,10 +57,7 @@ class MyPaginationPageState extends State<MyPaginationPage> {
   void initState() {
     isInternets();
 
-    Future.delayed(Duration(seconds: 5),(){  bloc.getReposData(1,15);});
-
-   database.createDatabase();
-
+    makeApiCalls();
   }
 
 
@@ -73,116 +70,119 @@ class MyPaginationPageState extends State<MyPaginationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Repositories",
-      style: TextStyle(fontSize: 18),),),
-      body: Stack(
-        children: <Widget>[
-          Column(
-            children: <Widget>[
-              Flexible(child: StreamBuilder(builder: (context,AsyncSnapshot<List<ReposData>> snapshot){
+        appBar: AppBar(title: Text("Repositories",
+          style: TextStyle(fontSize: 18),),),
+        body: Stack(
+          children: <Widget>[
+            Column(
+              children: <Widget>[
+                Flexible(child: StreamBuilder(builder: (context,AsyncSnapshot<List<ReposData>> snapshot){
+                  print("database ${database}");
+                  if(snapshot.hasData || !hasInternet){
 
-                if(snapshot.hasData || !hasInternet){
-                  if(snapshot.hasData)
-                  {
-                    if(list.length>0){list.removeLast();}
-                    /*for(var i=0;i<snapshot.data.length;i++){
+                    if(snapshot.hasData)
+                    {
+                      if(list.length>0){list.removeLast();}
+                      /*for(var i=0;i<snapshot.data.length;i++){
                       if(i<3){
                         list.add(snapshot.data[i]);
                       }
                     }*/
 
-                    list.addAll(snapshot.data);
-                  list.add(ReposData());
-                  }
-                  if(!hasInternet){
+                      list.addAll(snapshot.data);
+                      list.add(ReposData());
+                    }
+//                  if(!hasInternet){
 //                    list.clear();
-                    database.getCustomers().then((value) =>  list.addAll(value));
 
+                    database.getCustomers().then((value) =>
+                        list.addAll(value));
+                    print("hasInternet ${list.length}");
+//                  }
+                    if(snapshot.data.length>0 && (hasInternet as bool)){
+                      getDbDetails(snapshot.data);
+                    }
+                    list.map((e) => widgetList.add(ItemViews(e)));
+                    widgetList.add(Container(height: isLoading?50.0:0.0,
+//          color: Colors.amber,
+                      child: Center(
+                        child: CircularProgressIndicator(),
+                      ),));
+                  }else{
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
                   }
-                 if(snapshot.data.length>0 && (hasInternet as bool)){
-                   getDbDetails(snapshot.data);
-                 }
-                list.map((e) => widgetList.add(ItemViews(e)));
-                widgetList.add(Container(height: isLoading?50.0:0.0,
+                  if(list.length>0)
+                  {
+                    return Expanded( child:NotificationListener<ScrollNotification>(
+                      child: ListView.builder(itemBuilder: (context,index){/*widgetList[index]*/
+                        if(index<list.length-1 && list[index].description!=null && list[index].description.isNotEmpty){
+                          return ItemViews(list[index]);
+                        }else if(index==list.length-1){
+                          return Container(height: 50.0,width: 50,
 //          color: Colors.amber,
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),));
-                }else{
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                if(list.length>0)
-                {
-                  return Expanded( child:NotificationListener<ScrollNotification>(
-                    child: ListView.builder(itemBuilder: (context,index){/*widgetList[index]*/
-                      if(index<list.length-1 && list[index].description!=null && list[index].description.isNotEmpty){
-                       return ItemViews(list[index]);
-                      }else if(index==list.length-1){
-                        return Container(height: 50.0,width: 50,
-//          color: Colors.amber,
-                          child: Center(
-                            child: CircularProgressIndicator(),
-                          ),);
-                      }
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),);
+                        }
 
-                        },
-                      itemCount:/*snapshot.data == null ||
+                      },
+                        itemCount:/*snapshot.data == null ||
                 snapshot.data.length == null
                 ? 0
                 : snapshot.data.length*/list.length,
-                      physics: BouncingScrollPhysics(),
-                    )
-                    /* ListView.builder(itemBuilder: (context,index)=>ItemViews(list[index]),
+                        physics: BouncingScrollPhysics(),
+                      )
+                      /* ListView.builder(itemBuilder: (context,index)=>ItemViews(list[index]),
         itemCount: list.length,
         physics: BouncingScrollPhysics(),
       ),*/
-                    ,onNotification:  (ScrollNotification scrollInfo) {
+                      ,onNotification:  (ScrollNotification scrollInfo) {
                       isInternets();
-                    if (!isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-                      // start loading data
-                      setState(() {
-                        isLoading = true;
-                      });
+                      if (!isLoading && scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                        // start loading data
+                        setState(() {
+                          isLoading = true;
+                        });
 //            _loadData();
-                      inPage=lastpage;
+                        inPage=lastpage;
 
-                      lastpage+=15;
-                      bloc.getReposData(inPage, lastpage);
+                        lastpage+=15;
+                        bloc.getReposData(inPage, lastpage);
 
-                    }
-                  },));
-                }else{
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-                if(!snapshot.hasData || snapshot.hasError){
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-              },stream:(hasInternet as bool)? bloc.repoSubject:database.getCustomers(),)),
-              Container(height: isLoading?50.0:0.0,
+                      }
+                    },));
+                  }else{
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if(!snapshot.hasData || snapshot.hasError){
+                    return Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                },stream:/*(hasInternet as bool)?*/ bloc.repoSubject/*:database.getCustomers()*/,)),
+                Container(height: isLoading?50.0:0.0,
 //          color: Colors.amber,
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),)
-            ],
-          ),
-          Positioned(child: Container(height: isLoading?50.0:0.0,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),)
+              ],
+            ),
+            Positioned(child: Container(height: isLoading?50.0:0.0,
 //          color: Colors.amber,
-            child: Center(
-              child: CircularProgressIndicator(),
-            ),)
-            ,bottom: 0.0,)
-        ],
-      )
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),)
+              ,bottom: 0.0,)
+          ],
+        )
     );
   }
 
- /* Future _loadData() async {
+  /* Future _loadData() async {
     // perform fetching data delay
     await new Future.delayed(new Duration(seconds: 1));
     // update data and loading status
@@ -209,17 +209,21 @@ class MyPaginationPageState extends State<MyPaginationPage> {
       if (await DataConnectionChecker().hasConnection) {
         // Wifi detected & internet connection confirmed.
         hasInternet=true;
+
         return true;
       } else {
         // Wifi detected but no internet connection found.
         hasInternet=false;
+
         return false;
       }
     } else {
       // Neither mobile data or WIFI detected, not internet connection found.
       hasInternet=false;
+
       return false;
     }
+
   }
 
   void getDbDetails(List<ReposData> datas) async{
@@ -228,7 +232,7 @@ class MyPaginationPageState extends State<MyPaginationPage> {
       Future.delayed(Duration(),(){
         datas.map((e) {
           var i= database.createCustomer(e);
-        print("createCustomer${i}");});
+          print("createCustomer${i}");});
         /*for(var dt in datas){
           var i= database.createCustomer(dt);
           print("createCustomer${i}");
@@ -242,16 +246,23 @@ class MyPaginationPageState extends State<MyPaginationPage> {
 
     });
 
-   Future.delayed(Duration(seconds: 3),(){
-     print("${dbDts.length}");
-     if(list.length>dbDts.length){
-       datas.map((e) => database.createCustomer(e));
-     }
-   });
+    Future.delayed(Duration(seconds: 3),(){
+      print("${dbDts.length}");
+      if(list.length>dbDts.length){
+        datas.map((e) => database.createCustomer(e));
+      }
+    });
   }
 
   isInternets() async {
     await isInternet().then((value) => hasInternet=value);
+  }
+
+  void makeApiCalls() {
+
+    database.createDatabase();
+    if(hasInternet){ Future.delayed(Duration(seconds: 2),(){  bloc.getReposData(1,15);});}
+
   }
 
 
@@ -260,11 +271,11 @@ class MyPaginationPageState extends State<MyPaginationPage> {
 
 
 Widget ItemViews(ReposData data) =>Container(padding: EdgeInsets.all(10)
-,child: Material(
+  ,child: Material(
     elevation:3,
 //    shadowColor: Colors.black12,
     shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(4)),
+      borderRadius: BorderRadius.all(Radius.circular(4)),
 //        side: BorderSide(color: Colors.red)
     ),
     child:Center(child: Padding(child:
