@@ -49,12 +49,14 @@ class MyPaginationPageState extends State<MyPaginationPage> {
   var widgetList = <Widget>[];
   var inPage=1,lastpage=15;
   ScrollController controller=ScrollController();
-  var database= DatabaseHelper.instance;
+  var database;
   var hasInternet=true;
+  var dbDts;
 
 
   @override
   void initState() {
+    database= DatabaseHelper.instance;
     isInternets();
 
     makeApiCalls();
@@ -78,6 +80,15 @@ class MyPaginationPageState extends State<MyPaginationPage> {
               children: <Widget>[
                 Flexible(child: StreamBuilder(builder: (context,AsyncSnapshot<List<ReposData>> snapshot){
                   print("database ${database}");
+
+                  Future.delayed(Duration(),(){
+                    dbDts= database.getCustomers();
+
+                    if(inPage==1){
+                      dbDts.map((e)=>list.add(e));}
+                  });
+
+                  print("hasInternet ${list.length}");
                   if(snapshot.hasData || !hasInternet){
 
                     if(snapshot.hasData)
@@ -95,11 +106,9 @@ class MyPaginationPageState extends State<MyPaginationPage> {
 //                  if(!hasInternet){
 //                    list.clear();
 
-                    database.getCustomers().then((value) =>
-                        list.addAll(value));
-                    print("hasInternet ${list.length}");
+
 //                  }
-                    if(snapshot.data.length>0 && (hasInternet as bool)){
+                    if(snapshot.data.length>0){
                       getDbDetails(snapshot.data);
                     }
                     list.map((e) => widgetList.add(ItemViews(e)));
@@ -240,7 +249,7 @@ class MyPaginationPageState extends State<MyPaginationPage> {
       });
 
     }
-    var dbDts;
+
     Future.delayed(Duration(seconds: 1),(){
       dbDts= database.getCustomers();
 
