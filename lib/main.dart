@@ -79,20 +79,17 @@ class MyPaginationPageState extends State<MyPaginationPage> {
             Column(
               children: <Widget>[
                 Flexible(child: StreamBuilder(builder: (context,AsyncSnapshot<List<ReposData>> snapshot){
-                  print("database ${database}");
 
-                  Future.delayed(Duration(),(){
-                    dbDts= database.getCustomers();
+                  getDbDetails(snapshot.data);
+                  // Future.delayed(Duration(),(){
+                // callDatabase();
+                  // });
 
-                    if(inPage==1){
-                      dbDts.map((e)=>list.add(e));}
-                  });
 
-                  print("hasInternet ${list.length}");
-                  if(snapshot.hasData || !hasInternet){
+                  if(snapshot.hasData ){
 
-                    if(snapshot.hasData)
-                    {
+                    // if(snapshot.hasData)
+                    // {
                       if(list.length>0){list.removeLast();}
                       /*for(var i=0;i<snapshot.data.length;i++){
                       if(i<3){
@@ -102,14 +99,14 @@ class MyPaginationPageState extends State<MyPaginationPage> {
 
                       list.addAll(snapshot.data);
                       list.add(ReposData());
-                    }
+                    // }
 //                  if(!hasInternet){
 //                    list.clear();
 
 
 //                  }
                     if(snapshot.data.length>0){
-                      getDbDetails(snapshot.data);
+
                     }
                     list.map((e) => widgetList.add(ItemViews(e)));
                     widgetList.add(Container(height: isLoading?50.0:0.0,
@@ -236,31 +233,35 @@ class MyPaginationPageState extends State<MyPaginationPage> {
   }
 
   void getDbDetails(List<ReposData> datas) async{
-    if(inPage==1){
+    if(inPage==1 && datas.length>0){
 
-      Future.delayed(Duration(),(){
-        datas.map((e) {
+      // Future.delayed(Duration(),(){
+       /* datas.map((e) {
           var i= database.createCustomer(e);
-          print("createCustomer${i}");});
-        /*for(var dt in datas){
+          print("createCustomer${i}");});*/
+        for(var dt in datas){
           var i= database.createCustomer(dt);
           print("createCustomer${i}");
-        }*/
-      });
+        }
+
+      // });
 
     }
 
-    Future.delayed(Duration(seconds: 1),(){
-      dbDts= database.getCustomers();
+   /* Future.delayed(Duration(seconds: 1),(){
 
-    });
 
-    Future.delayed(Duration(seconds: 3),(){
-      print("${dbDts.length}");
-      if(list.length>dbDts.length){
-        datas.map((e) => database.createCustomer(e));
-      }
-    });
+    });*/
+    print("database${database}");
+    dbDts=await database.getCustomers();
+    /*if(datas.length>0){
+      Future.delayed(Duration(seconds: 3), () {
+        print("${dbDts.length}");
+        if (list.length > dbDts.length) {
+          datas.map((e) => database.createCustomer(e));
+        }
+      });
+    }*/
   }
 
   isInternets() async {
@@ -272,6 +273,15 @@ class MyPaginationPageState extends State<MyPaginationPage> {
     database.createDatabase();
     if(hasInternet){ Future.delayed(Duration(seconds: 2),(){  bloc.getReposData(1,15);});}
 
+  }
+
+  void callDatabase() async{
+    print("database ${database}");
+    dbDts=await database.getCustomers();
+    print("objectgetCustomers${dbDts.toString()}");
+    if(inPage==1){
+      dbDts.map((e)=>list.add(e));}
+    print("hasInternet ${list.length}");
   }
 
 

@@ -38,6 +38,7 @@ class ReposData {
     String hooks_url;
     String html_url;
     int id;
+    int ids=0;
     String issue_comment_url;
     String issue_events_url;
     String issues_url;

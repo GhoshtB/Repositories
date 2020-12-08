@@ -20,7 +20,8 @@ class DatabaseHelper{
 
   void populateDb(Database database, int version) async {
     await database.execute("CREATE TABLE ReposData ("
-        "id INTEGER PRIMARY KEY,"
+        "ids INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "id INTEGER,"
         "private TEXT,"
         "archive_url TEXT,"
         "archived TEXT,"
